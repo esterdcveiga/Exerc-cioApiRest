@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.exercicio.entity.Cachorro;
 import com.exercicio.repository.CachorroRepository;
@@ -33,8 +34,11 @@ public class CachorroController {
 	
 	@GetMapping("/cachorros/{idcachorro}")
 	public ResponseEntity<Cachorro> getCachorrosById(@PathVariable("idcachorro") Long idCachorro) {
-		Cachorro cachorro = doguinhoRepo.findById(idCachorro).get();
-		return ResponseEntity.status(HttpStatus.OK).body(cachorro);
+		Optional<Cachorro> cachorro = doguinhoRepo.findById(idCachorro);
+		if (cachorro.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Esse doguinho não existe em nosso banco de dados!");
+		}
+		return ResponseEntity.status(HttpStatus.OK).body(cachorro.get());
 	}
 	
 	@PostMapping("/cachorros")
@@ -45,12 +49,20 @@ public class CachorroController {
 	
 	@PutMapping("/cachorros/{idcachorro}")
 	public ResponseEntity<Cachorro> alterarContato(@PathVariable("idcachorro") Long idCachorro, @RequestBody Cachorro cachorro) {
+		Optional<Cachorro> cao = doguinhoRepo.findById(idCachorro);
+		if (cao.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Não é possível alterar um doguinho inexistente no banco de dados!");
+		}
 		cachorro.setId(idCachorro);
 		return ResponseEntity.ok(doguinhoRepo.save(cachorro));
 	}
 	
 	@DeleteMapping("/cachorros/{idcachorro}")
 	public ResponseEntity<Void> deleteContato(@PathVariable("idcachorro") Long idCachorro) {
+		Optional<Cachorro> cachorro = doguinhoRepo.findById(idCachorro);
+		if (cachorro.isEmpty()) {
+			throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Não será possível apagar esse doguinho pois ele não existe em nosso banco de dados!");
+		}
 		doguinhoRepo.deleteById(idCachorro);
 		return ResponseEntity.noContent().build();
 	}
